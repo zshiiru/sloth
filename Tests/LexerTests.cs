@@ -1,6 +1,5 @@
 ﻿
 using sloth.Lexer;
-using sloth.token;
 using Xunit;
 
 namespace sloth.Tests

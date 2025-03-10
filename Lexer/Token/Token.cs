@@ -5,7 +5,7 @@ using System.Text;
 using System.ComponentModel;
 using System.Threading.Tasks;
 
-namespace sloth.token
+namespace sloth.Lexer
 {
     /* Define the types of tokens possible */
     public enum TokenType
@@ -83,8 +83,8 @@ namespace sloth.token
 
         public Token(TokenType type, string literal)
         {
-            this.Type = type;
-            this.Literal = literal;
+            Type = type;
+            Literal = literal;
         }
     }
 }

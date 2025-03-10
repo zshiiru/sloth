@@ -1,4 +1,4 @@
-﻿using sloth.token;
+﻿
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,13 +7,31 @@ using System.Threading.Tasks;
 
 namespace sloth.Lexer
 {
+
+
     /* Main lexer logic */
     public class Lexer
     {
+
+        private readonly Dictionary<char, TokenType> LexerTokenDictionary = new()
+        {
+            {'=', TokenType.ASSIGN},
+            {';', TokenType.SEMICOLON},
+            {'(', TokenType.LPAREN },
+            {')', TokenType.RPAREN },
+            {',', TokenType.COMMA },
+            {'+', TokenType.PLUS },
+            {'{', TokenType.LBRACE },
+            {'}', TokenType.RBRACE },
+            {'\0', TokenType.EOF }
+        };
+
         public string Input;
         public int Position;
         public int ReadPosition;
         public char Char;
+
+        
 
         public Lexer(string input)
         {
@@ -41,45 +59,21 @@ namespace sloth.Lexer
         /* Get the next token */
         public Token NextToken()
         {
+
             Token token;
 
-            switch (Char)
-            {
-                case '=':
-                    token = NewToken(TokenType.ASSIGN, Char);
-                    break;
-                case ';':
-                    token = NewToken(TokenType.SEMICOLON, Char);
-                    break;
-                case '(':
-                    token = NewToken(TokenType.LPAREN, Char);
-                    break;
-                case ')':
-                    token = NewToken(TokenType.RPAREN, Char);
-                    break;
-                case ',':
-                    token = NewToken(TokenType.COMMA, Char);
-                    break;
-                case '+':
-                    token = NewToken(TokenType.PLUS, Char);
-                    break;
-                case '{':
-                    token = NewToken(TokenType.LBRACE, Char);
-                    break;
-                case '}':
-                    token = NewToken(TokenType.RBRACE, Char);
-                    break;
-                case '\0':
-                    token.Literal = "";
-                    token.Type = TokenType.EOF;
-                    break;
-                default:
-                    token.Literal = "";
-                    token.Type = TokenType.ILLEGAL;
-                    break;
-            }
+            if (LexerTokenDictionary.TryGetValue(Char, out TokenType tokenType)) {
+                token = NewToken(tokenType, Char);
 
+                if (tokenType == TokenType.EOF)
+                    token.Literal = "";
+
+            } else {
+                token.Literal = "";
+                token.Type = TokenType.ILLEGAL;
+            }
             ReadChar();
+
             return token;
         }
 
