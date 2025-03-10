@@ -20,6 +20,16 @@ namespace sloth.Lexer
         // Operators
         ASSIGN,
         PLUS,
+        MINUS,
+        BANG,
+        ASTERISK,
+        SLASH,
+
+        LT,
+        GT,
+
+        EQ,
+        NOT_EQ,
 
         // Delimiters
         COMMA,
@@ -32,7 +42,12 @@ namespace sloth.Lexer
 
         // Keywords
         FUNCTION,
-        LET
+        LET,
+        TRUE,
+        FALSE,
+        IF,
+        ELSE,
+        RETURN
     }
 
 
@@ -40,7 +55,7 @@ namespace sloth.Lexer
     public static class TokenExtension
     {
         /* Tokenizer translations */
-        private static readonly Dictionary<TokenType, string> TokenStrings = new()
+        public static readonly Dictionary<TokenType, string> TokenStrings = new()
         {
             { TokenType.ILLEGAL, "ILLEGAL" },
             { TokenType.EOF, "EOF" },
@@ -52,6 +67,14 @@ namespace sloth.Lexer
             // Operators
             { TokenType.ASSIGN, "=" },
             { TokenType.PLUS, "+" },
+            { TokenType.MINUS, "-" },
+            { TokenType.BANG, "!" },
+            { TokenType.ASTERISK, "*" },
+            { TokenType.SLASH, "/" },
+            { TokenType.LT, "<" },
+            { TokenType.GT, ">" },
+            { TokenType.EQ, "=" },
+            { TokenType.NOT_EQ, "!=" },
 
             // Delimiters
             { TokenType.COMMA, "," },
@@ -64,7 +87,12 @@ namespace sloth.Lexer
 
             // Keywords
             { TokenType.FUNCTION, "FUNCTION" },
-            { TokenType.LET, "LET" }
+            { TokenType.LET, "LET" },
+            { TokenType.TRUE, "TRUE" },
+            { TokenType.FALSE, "FALSE" },
+            { TokenType.IF, "IF" },
+            { TokenType.ELSE, "ELSE" },
+            { TokenType.RETURN, "RETURN" },
         };
 
         /* Enum extension */
