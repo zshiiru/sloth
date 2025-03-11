@@ -4,11 +4,20 @@ using sloth.Parser;
 using System;
 using System.Collections.Generic;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace sloth.Tests
 {
     public class ParserTests
     {
+
+        private readonly ITestOutputHelper _output;
+
+        public ParserTests(ITestOutputHelper output)
+        {
+            _output = output;
+        }
+
         [Fact]
         public void TestLetStatements()
         {
@@ -21,6 +30,8 @@ let foobar = 838383;
             var parser = new Parser.Parser(lexer);
 
             var program = parser.ParseProgram();
+            CheckParserErrors(parser);
+
             Assert.NotNull(program);
             Assert.Equal(3, program.Statements.Count);
 
@@ -33,43 +44,89 @@ let foobar = 838383;
 
             for (int i = 0; i < tests.Count; i++)
             {
-                var test = tests[i];
+                var name = tests[i];
                 var stmt = program.Statements[i];
-                if (!TestLetStatement(stmt, test))
+                if (stmt.TokenLiteral() != "let")
                 {
-                    return;
+                    Assert.Equal("let", stmt.TokenLiteral());
+                }
+
+                var letStmt = stmt as LetStatement;
+                if (letStmt == null)
+                {
+                    Assert.IsType<LetStatement>(stmt);
+                }
+
+                if (letStmt.Name.Value != name)
+                {
+                    Assert.Equal(name, letStmt.Name.Value);
+                }
+
+                if (letStmt.Name.TokenLiteral() != name)
+                {
+                    Assert.Equal(name, letStmt.Name.TokenLiteral());
                 }
             }
         }
 
-        private bool TestLetStatement(IStatement stmt, string name)
+        [Fact]
+        public void TestReturnStatements()
         {
-            if (stmt.TokenLiteral() != "let")
-            {
-                Assert.Equal("let", stmt.TokenLiteral());
-                return false;
-            }
+            var input = @"
+return 5;
+return 10;
+return 993322;
+";
+            var lexer = new Lexer.Lexer(input);
+            var parser = new Parser.Parser(lexer);
 
-            var letStmt = stmt as LetStatement;
-            if (letStmt == null)
-            {
-                Assert.IsType<LetStatement>(stmt);
-                return false;
-            }
+            var program = parser.ParseProgram();
+            CheckParserErrors(parser);
 
-            if (letStmt.Name.Value != name)
-            {
-                Assert.Equal(name, letStmt.Name.Value);
-                return false;
-            }
+            Assert.NotNull(program);
+            Assert.Equal(3, program.Statements.Count);
 
-            if (letStmt.Name.TokenLiteral() != name)
-            {
-                Assert.Equal(name, letStmt.Name.TokenLiteral());
-                return false;
-            }
 
-            return true;
+            for (int i = 0; i < program.Statements.Count; i++)
+            {
+                IStatement statement = program.Statements[i];
+
+                Assert.True(statement is ReturnStatement);
+                Assert.Equal("return", statement.TokenLiteral());
+            }
+        }
+
+        [Fact]
+        public void TestToString()
+        {
+            AST.SlothProgram program = new();
+
+            LetStatement letStatement = new();
+            letStatement.Token = new Token(TokenType.LET, "let");
+            letStatement.Name = new Identifier(new Token(TokenType.IDENT, "myVar"), "myVar");
+            letStatement.Value = new Identifier(new Token(TokenType.IDENT, "anotherVar"), "anotherVar");
+
+            program.Statements = new List<IStatement>() {
+                letStatement
+            };
+
+            Assert.Equal(program.ToString(), "let myVar = anotherVar;");
+        }
+
+
+        private void CheckParserErrors(Parser.Parser parser)
+        {
+            List<string> ParserErrors = parser.GetErrors();
+
+            if (ParserErrors.Count == 0)
+                return;
+
+            this._output.WriteLine($"parser has {ParserErrors.Count} errors");
+
+            foreach (string error in ParserErrors)
+            {
+                this._output.WriteLine($"parser error: {error}");
+            }
         }
     }
 }

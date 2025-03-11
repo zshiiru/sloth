@@ -10,12 +10,10 @@ namespace sloth.AST
     public interface INode
     {
         string TokenLiteral();
+        string ToString();
     }
 
-    public interface IStatement : INode
-    {
-        public void StatementNode();
-    }
+
 
     public interface IExpression : INode
     {
@@ -24,31 +22,20 @@ namespace sloth.AST
 
 
 
-    public class LetStatement : IStatement
-    {
-        public Token Token;
-        public Identifier Name;
-        public IExpression Value;
-
-        public string TokenLiteral()
-        {
-            return Token.Literal;
-        }
-         
-        public void StatementNode()
-        {
-
-        }
-    }
-
-    public class Identifier
+    public class Identifier : IExpression // implements Expression here
     {
         public Token Token; // IDENT TOKEN
         public string Value;
-        public string TokenLiteral()
+        public string TokenLiteral() => Token.Literal;
+        public string ToString() => Value;
+
+        public Identifier(Token token, string value)
         {
-            return Token.Literal;
+            this.Token = token;
+            this.Value = value;
         }
+
+        public void ExpressionNode() { }
     }
 
     public class SlothProgram
@@ -69,6 +56,18 @@ namespace sloth.AST
             {
                 return "";
             }
+        }
+
+        public override string ToString()
+        {
+            StringBuilder stringBuilder = new();
+
+            foreach (IStatement statement in Statements)
+            {
+                stringBuilder.Append(statement.ToString());
+            }
+
+            return stringBuilder.ToString();
         }
     }
 }
