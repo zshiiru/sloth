@@ -1,2 +1,4 @@
 # sloth
-an implementation of Monkey in c#
+An implementation of Monkey in C#
+
+# WIP
