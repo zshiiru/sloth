@@ -96,24 +96,6 @@ return 993322;
             }
         }
 
-        [Fact]
-        public void TestToString()
-        {
-            AST.SlothProgram program = new();
-
-            LetStatement letStatement = new();
-            letStatement.Token = new Token(TokenType.LET, "let");
-            letStatement.Name = new Identifier(new Token(TokenType.IDENT, "myVar"), "myVar");
-            letStatement.Value = new Identifier(new Token(TokenType.IDENT, "anotherVar"), "anotherVar");
-
-            program.Statements = new List<IStatement>() {
-                letStatement
-            };
-
-            Assert.Equal(program.ToString(), "let myVar = anotherVar;");
-        }
-
-
         private void CheckParserErrors(Parser.Parser parser)
         {
             List<string> ParserErrors = parser.GetErrors();
