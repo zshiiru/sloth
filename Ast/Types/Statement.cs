@@ -1,22 +1,23 @@
 ﻿using System.Text;
-using sloth.Lexer;
+using sloth.AST;
+using sloth.Lexer.Token;
 
-namespace sloth.AST;
+namespace sloth.Ast.Types;
 
 public interface IStatement : INode
 {
     public void StatementNode();
 }
 
-public class LetStatement : IStatement
+public class LetStatement(Identifier name, IExpression value, Token token) : IStatement
 {
-    public Identifier Name;
-    public Token Token;
-    public IExpression Value;
+    public Identifier Name = name;
+    private readonly Token _token = token;
+    private readonly IExpression _value = value;
 
     public string TokenLiteral()
     {
-        return Token.Literal;
+        return _token.Literal;
     }
 
     public void StatementNode()
@@ -28,25 +29,23 @@ public class LetStatement : IStatement
         StringBuilder buffer = new();
 
         buffer.Append(TokenLiteral() + " ");
-        buffer.Append(Name.ToString());
+        buffer.Append(Name);
         buffer.Append(" = ");
-
-        if (Value != null) buffer.Append(Value.ToString());
-
-        buffer.Append(";");
+        buffer.Append(_value.ToString());
+        buffer.Append(';');
 
         return buffer.ToString();
     }
 }
 
-public class ExpressionStatement : IStatement
+public class ExpressionStatement(IExpression expression, Token token) : IStatement
 {
-    public IExpression Expression;
-    public Token Token;
+    private readonly IExpression? _expression = expression;
+    private readonly Token _token = token;
 
     public string TokenLiteral()
     {
-        return Token.Literal;
+        return _token.Literal;
     }
 
     public void StatementNode()
@@ -55,21 +54,18 @@ public class ExpressionStatement : IStatement
 
     public override string ToString()
     {
-        if (Expression != null)
-            return Expression.ToString();
-
-        return "";
+        return _expression != null ? _expression.ToString() : "";
     }
 }
 
-public class ReturnStatement : IStatement
+public class ReturnStatement(IExpression? returnValue, Token token) : IStatement
 {
-    public IExpression ReturnValue;
-    public Token Token;
+    private readonly IExpression? _returnValue = returnValue;
+    private readonly Token _token = token;
 
     public string TokenLiteral()
     {
-        return Token.Literal;
+        return _token.Literal;
     }
 
     public void StatementNode()
@@ -81,10 +77,8 @@ public class ReturnStatement : IStatement
         StringBuilder buffer = new();
 
         buffer.Append(TokenLiteral() + " ");
-
-        if (ReturnValue != null) buffer.Append(ReturnValue.ToString());
-
-        buffer.Append(";");
+        if (_returnValue != null) buffer.Append(_returnValue.ToString());
+        buffer.Append(';');
 
         return buffer.ToString();
     }

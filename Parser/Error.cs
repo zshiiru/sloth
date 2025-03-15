@@ -1,27 +1,23 @@
-﻿using sloth.Lexer;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using sloth.Lexer.Token;
 
-namespace sloth.Parser
+namespace sloth.Parser;
+
+public class Error
 {
-    public class Error
+    private readonly List<string> _errors = [];
+
+    public List<string> GetErrors()
     {
-        private List<String> errors;
+        return _errors;
+    }
 
-        public Error()
-        {
-            errors = new();
-        }
+    private void AddError(string error)
+    {
+        _errors.Add(error);
+    }
 
-        public List<String> GetErrors() => errors;
-        private void AddError(string error) => errors.Add(error);
-
-        public void PeekError(TokenType currentTokenType, TokenType expectedTokenType)
-        {
-            AddError($"expected next token to be {expectedTokenType}, got {currentTokenType} instead");
-        }
+    public void PeekError(TokenType currentTokenType, TokenType expectedTokenType)
+    {
+        AddError($"expected next token to be {expectedTokenType}, got {currentTokenType} instead");
     }
 }

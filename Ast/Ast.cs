@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using sloth.Ast.Types;
-using sloth.Lexer;
 using sloth.Lexer.Token;
 
 namespace sloth.AST;
@@ -38,7 +37,7 @@ public class Identifier(Token token, string value) : IExpression // implements E
 
 public class SlothProgram
 {
-    public List<IStatement> Statements = new();
+    public List<IStatement> Statements = [];
 
     public string TokenLiteral()
     {

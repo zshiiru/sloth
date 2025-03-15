@@ -1,192 +1,175 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using sloth.Lexer.Token;
 
-namespace sloth.Lexer
+namespace sloth.Lexer;
+
+/* Main lexer logic */
+public class Lexer
 {
-
-
-    /* Main lexer logic */
-    public class Lexer
+    private readonly Dictionary<string, TokenType> _lexerKeywordDictionary = new()
     {
+        { "fn", TokenType.FUNCTION },
+        { "let", TokenType.LET },
+        { "true", TokenType.TRUE },
+        { "false", TokenType.FALSE },
+        { "if", TokenType.IF },
+        { "else", TokenType.ELSE },
+        { "return", TokenType.RETURN }
+    };
 
-        private readonly Dictionary<char, TokenType> LexerTokenDictionary = new()
+    private readonly Dictionary<char, TokenType> _lexerTokenDictionary = new()
+    {
+        { '=', TokenType.ASSIGN },
+        { ';', TokenType.SEMICOLON },
+        { '(', TokenType.LPAREN },
+        { ')', TokenType.RPAREN },
+        { ',', TokenType.COMMA },
+        { '+', TokenType.PLUS },
+        { '{', TokenType.LBRACE },
+        { '}', TokenType.RBRACE },
+        { '-', TokenType.MINUS },
+        { '!', TokenType.BANG },
+        { '*', TokenType.ASTERISK },
+        { '/', TokenType.SLASH },
+        { '<', TokenType.LT },
+        { '>', TokenType.GT },
+        { '\0', TokenType.EOF }
+    };
+
+    private char _char;
+
+    private readonly string _input;
+    private int _position;
+    private int _readPosition;
+
+
+    public Lexer(string input)
+    {
+        _input = input;
+
+        ReadChar();
+    }
+
+    /* Read next char */
+    private void ReadChar()
+    {
+        _char = _readPosition >= _input.Length ? '\0' : _input[_readPosition];
+        _position = _readPosition;
+        _readPosition += 1;
+    }
+
+    /* Get the next token */
+    public Token.Token NextToken()
+    {
+        Token.Token token;
+
+        SkipWhitespace();
+
+        // Dictionary lookup
+        if (_lexerTokenDictionary.TryGetValue(_char, out var tokenType))
         {
-            {'=', TokenType.ASSIGN},
-            {';', TokenType.SEMICOLON},
-            {'(', TokenType.LPAREN },
-            {')', TokenType.RPAREN },
-            {',', TokenType.COMMA },
-            {'+', TokenType.PLUS },
-            {'{', TokenType.LBRACE },
-            {'}', TokenType.RBRACE },
-            {'-', TokenType.MINUS},
-            {'!', TokenType.BANG },
-            {'*', TokenType.ASTERISK},
-            {'/', TokenType.SLASH},
-            {'<', TokenType.LT},
-            {'>', TokenType.GT},
-            {'\0', TokenType.EOF }
-        };
+            token = NewToken(tokenType, _char);
 
-        private readonly Dictionary<string, TokenType> LexerKeywordDictionary = new()
-        {
-            {"fn", TokenType.FUNCTION},
-            {"let", TokenType.LET},
-            {"true", TokenType.TRUE},
-            {"false", TokenType.FALSE},
-            {"if", TokenType.IF},
-            {"else", TokenType.ELSE},
-            {"return", TokenType.RETURN},
-        };
-
-        public string Input;
-        public int Position;
-        public int ReadPosition;
-        public char Char;
-
-        
-
-        public Lexer(string input)
-        {
-            Input = input;
-
-            ReadChar();
-        }
-
-        /* Read next char */
-        public void ReadChar()
-        {
-            if (ReadPosition >= Input.Length)
+            switch (tokenType)
             {
-                Char = '\0';
-            } else
-            {
-                Char = Input[ReadPosition];
-            }
-
-            Position = ReadPosition;
-            ReadPosition += 1;
-        }
-
-        /* Get the next token */
-        public Token NextToken()
-        {
-            Token token;
-
-            SkipWhitespace();
-
-            // Dictionary lookup
-            if (LexerTokenDictionary.TryGetValue(Char, out TokenType tokenType)) {
-                token = NewToken(tokenType, Char);
-
-                if (tokenType == TokenType.EOF)
+                case TokenType.EOF:
                     token.Literal = "";
-
+                    break;
                 // == case
-                if (tokenType == TokenType.ASSIGN)
+                case TokenType.ASSIGN:
                 {
                     if (PeekChar() == '=')
                     {
-                        char lastChar = Char;
+                        var lastChar = _char;
                         ReadChar();
                         token.Type = TokenType.EQ;
-                        token.Literal = lastChar.ToString() + Char.ToString();
+                        token.Literal = lastChar.ToString() + _char;
                     }
-                }
 
+                    break;
+                }
                 // != case
-                if (tokenType == TokenType.BANG)
+                case TokenType.BANG:
                 {
                     if (PeekChar() == '=')
                     {
-                        char lastChar = Char;
+                        var lastChar = _char;
                         ReadChar();
                         token.Type = TokenType.NOT_EQ;
-                        token.Literal = lastChar.ToString() + Char.ToString();
-                    }
-                }
-
-            } else {
-                // Token missing, check for identifier
-                if (char.IsAsciiLetter(Char) || Char == '_') {
-                    token.Literal = ReadIdentifier();
-
-                    // Determine which keyword the identifier is
-                    if (LexerKeywordDictionary.TryGetValue(token.Literal, out TokenType keywordTokenType))
-                    {
-                        token.Type = keywordTokenType;
-                    } else
-                    {
-                        token.Type = TokenType.IDENT;
+                        token.Literal = lastChar.ToString() + _char;
                     }
 
-                    return token;
-                } else if (char.IsAsciiDigit(Char)) {
-                    // Read number
-                    token.Type = TokenType.INT;
-                    token.Literal = ReadNumber();
-                    return token;
-                } else {
-                    token = NewToken(TokenType.ILLEGAL, Char);
+                    break;
                 }
             }
+        }
+        else
+        {
+            // Token missing, check for identifier
+            if (char.IsAsciiLetter(_char) || _char == '_')
+            {
+                token.Literal = ReadIdentifier();
+
+                // Determine which keyword the identifier is
+                token.Type = _lexerKeywordDictionary.GetValueOrDefault(token.Literal, TokenType.IDENT);
+
+                return token;
+            }
+
+            if (char.IsAsciiDigit(_char))
+            {
+                // Read number
+                token.Type = TokenType.INT;
+                token.Literal = ReadNumber();
+                return token;
+            }
+
+            token = NewToken(TokenType.ILLEGAL, _char);
+        }
+
+        ReadChar();
+
+        return token;
+    }
+
+    /* Read identifier */
+    private string ReadIdentifier()
+    {
+        var oldPosition = _position;
+
+        // Read until the identifier ends
+        while (char.IsAsciiLetter(_char) || _char == '_') ReadChar();
+
+        // Return identifier
+        return _input.Substring(oldPosition, _position - oldPosition);
+    }
+
+    // Read number
+    private string ReadNumber()
+    {
+        var oldPosition = _position;
+
+        // Read until no more digits
+        while (char.IsAsciiDigit(_char)) ReadChar();
+
+
+        // Return identifier
+        return _input.Substring(oldPosition, _position - oldPosition);
+    }
+
+    // Peek char
+    private char PeekChar()
+    {
+        return _readPosition >= _input.Length ? '\0' : _input[_readPosition];
+    }
+
+    private void SkipWhitespace()
+    {
+        while (char.IsWhiteSpace(_char))
             ReadChar();
+    }
 
-            return token;
-        }
-
-        /* Read identifier */
-        private string ReadIdentifier()
-        {
-            int oldPosition = Position;
-            
-            // Read until the identifier ends
-            while (char.IsAsciiLetter(Char) || Char == '_')
-            {
-                ReadChar();
-            }
-
-            // Return identifier
-            return Input.Substring(oldPosition, Position - oldPosition);
-
-        }
-
-        // Read number
-        private string ReadNumber()
-        {
-            int oldPosition = Position;
-
-            // Read until no more digits
-            while (char.IsAsciiDigit(Char))
-            {
-                ReadChar();
-            }
-
-
-            // Return identifier
-            return Input.Substring(oldPosition, Position - oldPosition);
-        }
-
-        // Peek char
-        public char PeekChar()
-        {
-            if (ReadPosition >= Input.Length)
-                return '\0';
-
-            return Input[ReadPosition];
-        }
-        private void SkipWhitespace()
-        {
-            while (char.IsWhiteSpace(Char))
-                ReadChar();
-        }
-        private Token NewToken(TokenType tokenType, char ch)
-        {
-            return new Token(tokenType, ch.ToString());
-        }
+    private static Token.Token NewToken(TokenType tokenType, char ch)
+    {
+        return new Token.Token(tokenType, ch.ToString());
     }
 }

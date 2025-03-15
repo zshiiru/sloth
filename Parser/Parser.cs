@@ -1,130 +1,120 @@
 ﻿using sloth.AST;
-using sloth.Lexer;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using sloth.Ast.Types;
+using sloth.Lexer.Token;
 
-namespace sloth.Parser
+namespace sloth.Parser;
+
+public class Parser
 {
+    private readonly Error _errorHandler;
 
-    public class Parser
+    private readonly Lexer.Lexer _lexer;
+    private Token _currentToken;
+    private Token _peekToken;
+
+    public Parser(Lexer.Lexer lexer)
     {
+        _lexer = lexer;
 
-        private Lexer.Lexer lexer;
-        private Token currentToken;
-        private Token peekToken;
+        // Classes purely for organization
+        _errorHandler = new Error();
 
-        private Error errorHandler;
+        // Read two tokens, so curToken and peekToken are both set
+        NextToken();
+        NextToken();
+    }
 
-        public Parser(Lexer.Lexer lexer)
+    // Error interfaces
+    public List<string> GetErrors()
+    {
+        return _errorHandler.GetErrors();
+    }
+
+    private void NextToken()
+    {
+        _currentToken = _peekToken;
+        _peekToken = _lexer.NextToken();
+    }
+
+    private LetStatement? ParseLetStatement()
+    {
+        var statement = new LetStatement(null, null, _currentToken);
+
+        // Check if the next token is a IDENT
+        if (!ExpectPeek(TokenType.IDENT))
+            return null; // Missing IDENT after let
+
+
+        // Add identifier to let statement
+        Identifier
+            identifier =
+                new(_currentToken,
+                    _currentToken.Literal); // ExpectPeek grabs the next token, so our identifier is the currentToken
+
+        statement.Name = identifier;
+
+        // TODO: We're skipping the expressions until we
+        // encounter a semicolon
+        // TODO: (THE VALUE IS MISSING!!!)
+        while (_currentToken.Type != TokenType.SEMICOLON) NextToken();
+
+        return statement;
+    }
+
+    private ReturnStatement ParseReturnStatement()
+    {
+        var statement = new ReturnStatement(null, _currentToken);
+        NextToken();
+
+        // TODO: We're skipping the expressions until we
+        // encounter a semicolon
+        while (_currentToken.Type != TokenType.SEMICOLON) NextToken();
+
+        return statement;
+    }
+
+    private IStatement? ParseStatement()
+    {
+        switch (_currentToken.Type)
         {
-            this.lexer = lexer;
+            case TokenType.LET:
+                return ParseLetStatement();
+            case TokenType.RETURN:
+                return ParseReturnStatement();
+            default:
+                return null;
+        }
+    }
 
-            // Classes purely for organization
-            this.errorHandler = new();
-
-            // Read two tokens, so curToken and peekToken are both set
+    // Function to help enforce the order of tokens
+    private bool ExpectPeek(TokenType tokenType)
+    {
+        if (_peekToken.Type == tokenType)
+        {
             NextToken();
+            return true;
+        }
+
+        // Log error
+        _errorHandler.PeekError(_currentToken.Type, tokenType);
+        return false;
+    }
+
+    public SlothProgram ParseProgram()
+    {
+        SlothProgram program = new()
+        {
+            Statements = []
+        };
+
+        while (_currentToken.Type != TokenType.EOF)
+        {
+            var statement = ParseStatement();
+            if (statement != null) program.Statements.Add(statement);
+
             NextToken();
         }
-        
-        // Error interfaces
-        public List<String> GetErrors() => errorHandler.GetErrors();
 
-        public void NextToken()
-        {
-            currentToken = peekToken;
-            peekToken = lexer.NextToken();
-        }
-
-        public IStatement? ParseLetStatement()
-        {
-            LetStatement statement = new LetStatement();
-            statement.Token = currentToken;
-
-            // Check if the next token is a IDENT
-            if (!ExpectPeek(TokenType.IDENT))
-                return null; // Missing IDENT after let
-
-
-            // Add identifier to let statement
-            Identifier identifier = new(currentToken, currentToken.Literal); // ExpectPeek grabs the next token, so our identifier is the currentToken
-
-            statement.Name = identifier;
-
-            // TODO: We're skipping the expressions until we
-            // encounter a semicolon
-            while (currentToken.Type != TokenType.SEMICOLON)
-            {
-                NextToken();
-            }
-
-            return statement;
-        }
-
-        public IStatement? ParseReturnStatement()
-        {
-            ReturnStatement statement = new ReturnStatement();
-            statement.Token = currentToken;
-
-            NextToken();
-
-            // TODO: We're skipping the expressions until we
-            // encounter a semicolon
-            while (currentToken.Type != TokenType.SEMICOLON)
-            {
-                NextToken();
-            }
-
-            return statement;
-        }
-        public IStatement? ParseStatement()
-        {
-            switch (currentToken.Type)
-            {
-                case TokenType.LET:
-                    return ParseLetStatement();
-                case TokenType.RETURN:
-                    return ParseReturnStatement();
-                default:
-                    return null;
-            }
-        }
-
-        // Function to help enforce the order of tokens
-        public bool ExpectPeek(TokenType tokenType)
-        {
-            if (peekToken.Type == tokenType)
-            {
-                NextToken();
-                return true;
-            }
-
-            // Log error
-            errorHandler.PeekError(currentToken.Type, tokenType);
-            return false;
-        }
-        public AST.SlothProgram ParseProgram()
-        {
-            AST.SlothProgram program = new();
-
-            program.Statements = new();
-
-            while (currentToken.Type != TokenType.EOF)
-            {
-                IStatement statement = ParseStatement();
-                if (statement != null)
-                {
-                    program.Statements.Add(statement);
-                }
-
-                NextToken();
-            }
-
-            return program;
-        }
-
+        return program;
     }
 }
