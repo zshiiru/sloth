@@ -1,4 +1,5 @@
-﻿using sloth.Ast.Types;
+﻿using sloth.AST;
+using sloth.Ast.Types;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -74,6 +75,28 @@ public class ParserTests(ITestOutputHelper output)
         }
     }
 
+    [Fact]
+    public void TestIdentifierExpression()
+    {
+        const string input = "foobar;";
+        var lexer = new Lexer.Lexer(input);
+        var parser = new Parser.Parser(lexer);
+        var program = parser.ParseProgram();
+        CheckParserErrors(parser);
+        
+        Assert.Single(program.Statements);
+        
+        IStatement statement = program.Statements[0];
+        Assert.True(program.Statements[0] is ExpressionStatement);
+
+        ExpressionStatement expressionStatement = (ExpressionStatement)statement;
+        Assert.True(expressionStatement.Expression is Identifier);
+
+        Identifier expressionStatementIdentifier = (Identifier)expressionStatement.Expression;
+        Assert.True(expressionStatementIdentifier.Value == "foobar");
+        Assert.True(expressionStatementIdentifier.TokenLiteral() == "foobar");
+
+    }
     private void CheckParserErrors(Parser.Parser parser)
     {
         var parserErrors = parser.GetErrors();

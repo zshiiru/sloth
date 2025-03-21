@@ -38,9 +38,9 @@ public class LetStatement(Identifier name, IExpression value, Token token) : ISt
     }
 }
 
-public class ExpressionStatement(IExpression expression, Token token) : IStatement
+public class ExpressionStatement(IExpression? expression, Token token) : IStatement
 {
-    private readonly IExpression? _expression = expression;
+    public readonly IExpression? Expression = expression;
     private readonly Token _token = token;
 
     public string TokenLiteral()
@@ -54,7 +54,7 @@ public class ExpressionStatement(IExpression expression, Token token) : IStateme
 
     public override string ToString()
     {
-        return _expression != null ? _expression.ToString() : "";
+        return Expression != null ? Expression.ToString() : "";
     }
 }
 

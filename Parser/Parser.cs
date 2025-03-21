@@ -5,8 +5,18 @@ using sloth.Lexer.Token;
 namespace sloth.Parser;
 
 public delegate IExpression PrefixParse();
-
 public delegate IExpression InfixParse(IExpression expression);
+
+enum Precedence
+{
+    LOWEST = 1,
+    EQUALS,      // ==
+    LESSGREATER, // > or <
+    SUM,         // +
+    PRODUCT,     // *
+    PREFIX,      // -X or !X
+    CALL         // myFunction(X)
+}
 
 public class Parser
 {
@@ -29,8 +39,15 @@ public class Parser
         // Read two tokens, so curToken and peekToken are both set
         NextToken();
         NextToken();
+        
+        RegisterPrefix(TokenType.IDENT, ParseIdentifier);
     }
 
+    private IExpression ParseIdentifier()
+    {
+        return new Identifier(_currentToken, _currentToken.Literal);
+    }
+    
     // Error interfaces
     public List<string> GetErrors()
     {
@@ -80,6 +97,26 @@ public class Parser
         return statement;
     }
 
+    private ExpressionStatement ParseExpressionStatement()
+    {
+        ExpressionStatement statement = new ExpressionStatement(ParseExpression(Precedence.LOWEST), _currentToken);
+
+        if (_peekToken.Type == TokenType.SEMICOLON)
+            NextToken(); // optional semicolon
+
+        return statement;
+    }
+
+    private IExpression? ParseExpression(Precedence precedence)
+    {
+        if (_prefixParseMap.TryGetValue(_currentToken.Type, out PrefixParse prefixParse))
+        {
+            return prefixParse(); // left expression
+        }
+
+        return null;
+    }
+
     private IStatement? ParseStatement()
     {
         switch (_currentToken.Type)
@@ -89,10 +126,10 @@ public class Parser
             case TokenType.RETURN:
                 return ParseReturnStatement();
             default:
-                return null;
+                return ParseExpressionStatement();
         }
     }
-
+    
     // Function to help enforce the order of tokens
     private bool ExpectPeek(TokenType tokenType)
     {
