@@ -119,6 +119,42 @@ public class ParserTests(ITestOutputHelper output)
         Assert.True(expressionStatementIdentifier.TokenLiteral() == "5");
 
     }
+
+    [Fact]
+    public void TestParsingPrefixExpressions()
+    {
+        List<List<string>> tests = new List<List<string>> 
+        {
+            new List<string> { "!5;", "!", "5"},
+            new List<string> { "-15;", "-", "15" }
+        };
+
+        foreach (var test in tests)
+        {
+            var lexer = new Lexer.Lexer(test[0]);
+            var parser = new Parser.Parser(lexer);
+            var program = parser.ParseProgram();
+            CheckParserErrors(parser);
+
+            Assert.Single(program.Statements);
+            
+            IStatement statement = program.Statements[0];
+            Assert.True(program.Statements[0] is ExpressionStatement);
+            ExpressionStatement expressionStatement = (ExpressionStatement)statement;
+            
+            IExpression expression = expressionStatement.Expression;
+            Assert.True(expression is PrefixExpression);
+
+            PrefixExpression prefixExpression = (PrefixExpression)expression;
+            Assert.Equal(prefixExpression.Operator, test[1]);
+            
+            // Test integer literal
+            Assert.True(prefixExpression.Right is IntegerLiteral);
+            IntegerLiteral literal = (IntegerLiteral)prefixExpression.Right;
+            Assert.Equal(literal.Value, Int64.Parse(test[2]));
+            Assert.Equal(literal.TokenLiteral(), test[2]);
+        }
+    }
     private void CheckParserErrors(Parser.Parser parser)
     {
         var parserErrors = parser.GetErrors();

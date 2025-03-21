@@ -42,6 +42,18 @@ public class Parser
         
         RegisterPrefix(TokenType.IDENT, ParseIdentifier);
         RegisterPrefix(TokenType.INT, ParseIntegerLiteral);
+        RegisterPrefix(TokenType.BANG, ParsePrefixExpression);
+        RegisterPrefix(TokenType.MINUS, ParsePrefixExpression);
+    }
+
+    private IExpression? ParsePrefixExpression()
+    {
+        PrefixExpression expression = new PrefixExpression(_currentToken, _currentToken.Literal);
+        
+        NextToken();
+        expression.Right = ParseExpression(Precedence.PREFIX);
+
+        return expression;
     }
 
     private IExpression ParseIdentifier()
@@ -128,7 +140,7 @@ public class Parser
         {
             return prefixParse(); // left expression
         }
-
+        _errorHandler.NoPrefixParseFunctionError(_currentToken.Type);
         return null;
     }
 

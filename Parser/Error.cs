@@ -20,4 +20,9 @@ public class Error
     {
         AddError($"expected next token to be {expectedTokenType}, got {currentTokenType} instead");
     }
+
+    public void NoPrefixParseFunctionError(TokenType tokenType)
+    {
+        AddError($"no prefix parse function found for token type {tokenType}");
+    }
 }
