@@ -4,6 +4,10 @@ using sloth.Lexer.Token;
 
 namespace sloth.Parser;
 
+public delegate IExpression PrefixParse();
+
+public delegate IExpression InfixParse(IExpression expression);
+
 public class Parser
 {
     private readonly Error _errorHandler;
@@ -11,6 +15,9 @@ public class Parser
     private readonly Lexer.Lexer _lexer;
     private Token _currentToken;
     private Token _peekToken;
+
+    private Dictionary<TokenType, PrefixParse> _prefixParseMap = [];
+    private Dictionary<TokenType, InfixParse> _infixParseMap = [];
 
     public Parser(Lexer.Lexer lexer)
     {
@@ -100,6 +107,16 @@ public class Parser
         return false;
     }
 
+    private void RegisterPrefix(TokenType tokenType, PrefixParse prefixParse)
+    {
+        _prefixParseMap[tokenType] = prefixParse;
+    }
+
+    private void RegisterInfix(TokenType tokenType, InfixParse infixParse)
+    {
+        _infixParseMap[tokenType] = infixParse;
+    }
+    
     public SlothProgram ParseProgram()
     {
         SlothProgram program = new()
