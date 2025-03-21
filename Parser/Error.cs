@@ -11,7 +11,7 @@ public class Error
         return _errors;
     }
 
-    private void AddError(string error)
+    public void AddError(string error)
     {
         _errors.Add(error);
     }

@@ -4,7 +4,7 @@ using sloth.Lexer.Token;
 
 namespace sloth.Parser;
 
-public delegate IExpression PrefixParse();
+public delegate IExpression? PrefixParse();
 public delegate IExpression InfixParse(IExpression expression);
 
 enum Precedence
@@ -41,13 +41,28 @@ public class Parser
         NextToken();
         
         RegisterPrefix(TokenType.IDENT, ParseIdentifier);
+        RegisterPrefix(TokenType.INT, ParseIntegerLiteral);
     }
 
     private IExpression ParseIdentifier()
     {
         return new Identifier(_currentToken, _currentToken.Literal);
     }
-    
+
+    private IExpression? ParseIntegerLiteral()
+    {
+        IntegerLiteral literal = new IntegerLiteral(_currentToken);
+
+        if (Int64.TryParse(_currentToken.Literal, out Int64 value))
+        {
+            literal.Value = value;
+            return literal;
+        }
+        
+        // error handling
+        _errorHandler.AddError($"could not parse {_currentToken.Literal} as an integer");
+        return null;
+    }
     // Error interfaces
     public List<string> GetErrors()
     {

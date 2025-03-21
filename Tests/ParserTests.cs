@@ -97,6 +97,28 @@ public class ParserTests(ITestOutputHelper output)
         Assert.True(expressionStatementIdentifier.TokenLiteral() == "foobar");
 
     }
+    [Fact]
+    public void TestIntegerLiteralExpression()
+    {
+        const string input = "5;";
+        var lexer = new Lexer.Lexer(input);
+        var parser = new Parser.Parser(lexer);
+        var program = parser.ParseProgram();
+        CheckParserErrors(parser);
+        
+        Assert.Single(program.Statements);
+        
+        IStatement statement = program.Statements[0];
+        Assert.True(program.Statements[0] is ExpressionStatement);
+
+        ExpressionStatement expressionStatement = (ExpressionStatement)statement;
+        Assert.True(expressionStatement.Expression is IntegerLiteral);
+
+        IntegerLiteral expressionStatementIdentifier = (IntegerLiteral)expressionStatement.Expression;
+        Assert.True(expressionStatementIdentifier.Value == 5);
+        Assert.True(expressionStatementIdentifier.TokenLiteral() == "5");
+
+    }
     private void CheckParserErrors(Parser.Parser parser)
     {
         var parserErrors = parser.GetErrors();
